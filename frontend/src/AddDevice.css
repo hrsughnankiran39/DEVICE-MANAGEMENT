@@ -1,0 +1,62 @@
+.add-device-container {
+  margin: 20px auto;
+  padding: 8px; /* Reduced padding to decrease height */
+  max-width: 350px; /* Width remains the same */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box; /* Ensures padding doesn't affect width */
+  height: auto; /* Allow the height to adjust based on content */
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  font-size: 18px; /* Font size of title stays the same */
+}
+
+.form-group {
+  margin-bottom: 8px; /* Reduced margin to decrease form height */
+}
+
+label {
+  display: block;
+  margin-bottom: 4px; /* Margin for labels stays the same */
+  font-weight: bold;
+  color: #333;
+  font-size: 12px; /* Font size for labels stays the same */
+}
+
+input {
+  width: 100%;
+  padding: 6px; /* Padding for inputs stays the same */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Ensures input stays within form container */
+  font-size: 12px; /* Font size for input fields stays the same */
+}
+
+button {
+  width: 100%;
+  padding: 6px; /* Padding for button stays the same */
+  background-color: #ff7f50;
+  color: #f6e58d;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin: 10px auto; /* Button centered */
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.response-message {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+  color: #007bff;
+  font-size: 12px; /* Font size for the response message stays the same */
+}

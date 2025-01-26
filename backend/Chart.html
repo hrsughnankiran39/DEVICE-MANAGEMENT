@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Count Pie Chart</title>
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jQuery Library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Basic styling for the canvas and text */
+        canvas {
+            display: block;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+        }
+        .device-counts {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas element to render the pie chart -->
+    <canvas id="deviceChart" width="400" height="400"></canvas>
+    <!-- Div to display device counts -->
+    <div class="device-counts" id="deviceCounts">
+        <!-- Device counts will be displayed here -->
+    </div>
+
+    <script>
+        // Fetch the device count data from the /api/devicescount endpoint
+        $.get('/api/devicescount', (data) => {
+            console.log('Data received from /api/devicescount:', data);
+
+            // Get the counts from the server response
+            const countWithinOneHour = data.countWithinOneHour || 0;
+            const countBeforeOneHour = data.countBeforeOneHour || 0;
+
+            console.log('Counts:', countWithinOneHour, countBeforeOneHour);
+
+            // Ensure the canvas context is accessible
+            const ctx = document.getElementById('deviceChart').getContext('2d');
+
+            // Create the pie chart
+            try {
+                const deviceChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Created within the last hour', 'Created before one hour'],
+                        datasets: [{
+                            label: 'Device Count',
+                            data: [countWithinOneHour, countBeforeOneHour], // Pie chart data
+                            backgroundColor: ['#36A2EB', '#FF6384'],
+                            borderColor: ['#36A2EB', '#FF6384'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return tooltipItem.label + ': ' + tooltipItem.raw;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing Chart.js:', error);
+            }
+
+            // Display device counts in text format below the chart
+            const deviceCountsDiv = document.getElementById('deviceCounts');
+            deviceCountsDiv.innerHTML = `
+                <p><strong>Created within the last hour:</strong> ${countWithinOneHour}</p>
+                <p><strong>Created before one hour:</strong> ${countBeforeOneHour}</p>
+            `;
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error('Error fetching data from /api/devicescount:', textStatus, errorThrown);
+            alert('Failed to load data. Please check the server or endpoint.');
+        });
+    </script>
+</body>
+</html>
