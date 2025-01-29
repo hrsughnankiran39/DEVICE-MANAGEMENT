@@ -16,7 +16,7 @@ class DeviceService {
     }
     static async getAllDevices(filters = {}) {
         const { creator, startDate, endDate } = filters; // Destructure filters
-        let query = 'SELECT * FROM devices';
+        let query = 'SELECT * FROM devices WHERE soft_delete = 0';
         const queryParams = [];
     
         if (creator || startDate || endDate) {
@@ -52,7 +52,7 @@ class DeviceService {
     
 
     static async getDeviceCount() {
-        const query = 'SELECT * FROM devices';
+        const query = 'SELECT * FROM devices WHERE soft_delete = 0';
         return new Promise((resolve, reject) => {
             db.query(query, (err, results) => {
                 if (err) return reject(err);
@@ -90,7 +90,7 @@ class DeviceService {
 
     // Add this method to get the notification count (number of devices)
     static async getNotificationCount() {
-        const query = 'SELECT COUNT(*) AS deviceCount FROM devices';  // SQL query to count devices
+        const query = 'SELECT COUNT(*) AS deviceCount FROM devices WHERE soft_delete = 0'; // SQL query to count devices
         return new Promise((resolve, reject) => {
             db.query(query, (err, result) => {
                 if (err) return reject(err);
@@ -100,24 +100,63 @@ class DeviceService {
     }
 
     static async addDevice(device_id, created_by) {
-        const query = 'INSERT INTO devices (device_id, created_by) VALUES (?, ?)';
         return new Promise((resolve, reject) => {
-            db.query(query, [device_id, created_by], (err, result) => {
+            // First, check if the device exists
+            const checkQuery = 'SELECT soft_delete FROM devices WHERE device_id = ?';
+            
+            db.query(checkQuery, [device_id], (err, results) => {
                 if (err) return reject(err);
-                resolve(result);
+    
+                if (results.length > 0) {
+                    const { soft_delete } = results[0];
+    
+                    if (soft_delete === 1) {
+                        // If the device was soft deleted, reactivate it
+                        const updateQuery = 'UPDATE devices SET soft_delete = 0, created_by = ?, created_time = CURRENT_TIMESTAMP WHERE device_id = ?';
+                        db.query(updateQuery, [created_by, device_id], (err, result) => {
+                            if (err) return reject(err);
+                            resolve({ message: `Device ${device_id} restored successfully.` });
+                        });
+                    } else {
+                        // Device already exists and is active
+                        reject({ code: 'ER_DUP_ENTRY' });
+                    }
+                } else {
+                    // If device does not exist, insert it
+                    const insertQuery = 'INSERT INTO devices (device_id, created_by) VALUES (?, ?)';
+                    db.query(insertQuery, [device_id, created_by], (err, result) => {
+                        if (err) return reject(err);
+                        resolve({ message: `Device ${device_id} added successfully.` });
+                    });
+                }
             });
         });
     }
+    
 
     static async deleteDevice(device_id) {
-        const query = 'DELETE FROM devices WHERE device_id = ?';
         return new Promise((resolve, reject) => {
-            db.query(query, [device_id], (err, result) => {
+            // Check if the device exists and is already soft deleted
+            const checkQuery = 'SELECT soft_delete FROM devices WHERE device_id = ?';
+            
+            db.query(checkQuery, [device_id], (err, results) => {
                 if (err) return reject(err);
-                resolve(result);
+    
+                if (results.length === 0 || results[0].soft_delete === 1) {
+                    // If no record found or already soft deleted, return "not found"
+                    return resolve({ affectedRows: 0 });
+                }
+    
+                // Otherwise, perform the soft delete
+                const updateQuery = 'UPDATE devices SET soft_delete = 1 WHERE device_id = ?';
+                db.query(updateQuery, [device_id], (err, result) => {
+                    if (err) return reject(err);
+                    resolve(result);
+                });
             });
         });
     }
+    
 }
 
 module.exports = DeviceService;

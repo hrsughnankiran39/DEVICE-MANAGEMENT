@@ -83,19 +83,9 @@ const Landing = () => {
       const response = await axios.get("http://localhost:5000/api/getnotification");
       if (response.data.statusCode === 200) {
         setDeviceCount(response.data.deviceCount); // Update device count
-        setNotificationMessage(`TOTAL NUMBER OF DEVICES ARE: ${response.data.deviceCount}`);
-        setIsNotificationVisible(true);
-        setTimeout(() => setIsNotificationVisible(false), 5000);
-      } else {
-        setNotificationMessage("Failed to fetch notification");
-        setIsNotificationVisible(true);
-        setTimeout(() => setIsNotificationVisible(false), 5000);
       }
     } catch (error) {
       console.error("Error fetching notification:", error);
-      setNotificationMessage("Error fetching notification.");
-      setIsNotificationVisible(true);
-      setTimeout(() => setIsNotificationVisible(false), 5000);
     }
   };
 
@@ -180,20 +170,17 @@ const Landing = () => {
           {status}
         </p>
         <div>
-          <div style={styles.notificationContainer}>
-            <FontAwesomeIcon
-              icon={faBell}
-              style={styles.notificationIcon}
-              title="Notifications"
-              onClick={fetchNotification}
-            />
-            {deviceCount > 0 && <span style={styles.badge}>{deviceCount}</span>} {/* Badge for count */}
-            {isNotificationVisible && (
-              <p style={styles.notificationMessage}>{notificationMessage}</p>
-            )}
-          </div>
-          {/* Other content and components */}
-        </div>
+  <div style={styles.notificationContainer}>
+    <FontAwesomeIcon
+      icon={faBell}
+      style={styles.notificationIcon}
+      title="Notifications"
+      onClick={fetchNotification}
+    />
+    {deviceCount > 0 && <span style={styles.badge}>{deviceCount}</span>} {/* Badge for count */}
+  </div>
+  {/* Other content and components */}
+</div>
         <button style={styles.logoutButton} onClick={handleLogout}>
           <FontAwesomeIcon icon={faSignOutAlt} /> Logout
         </button>

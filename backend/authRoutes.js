@@ -27,7 +27,8 @@ router.post('/signup', async (req, res) => {
 
         // Hash the password before saving it in the database
         try {
-            const hashedPassword = await bcrypt.hash(password, 10);
+            const hashedPassword = await bcrypt.hash(password, 6);
+            console.log(hashedPassword);
 
             // Insert the new user into the database
             db.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashedPassword], (err, result) => {

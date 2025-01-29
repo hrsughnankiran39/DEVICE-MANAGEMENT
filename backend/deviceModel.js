@@ -22,8 +22,10 @@ const createDevicesTableQuery = `
 CREATE TABLE IF NOT EXISTS devices (
     device_id VARCHAR(50) PRIMARY KEY,
     created_by VARCHAR(50) NOT NULL,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    soft_delete BOOLEAN DEFAULT FALSE
 )`;
+
 
 db.query(createDevicesTableQuery, (err, results) => {
     if (err) {

@@ -74,12 +74,12 @@ class DeviceController {
                 message: getReasonPhrase(StatusCodes.BAD_REQUEST),
             });
         }
-
+    
         try {
             const result = await DeviceService.addDevice(device_id, created_by);
             res.status(StatusCodes.CREATED).json({
                 statusCode: StatusCodes.CREATED,
-                message: `Device ${device_id} added successfully`,
+                message: result.message,
             });
         } catch (err) {
             if (err.code === 'ER_DUP_ENTRY') {
@@ -96,6 +96,7 @@ class DeviceController {
             }
         }
     }
+    
 
     static async deleteDevice(req, res) {
         const { device_id } = req.body;
@@ -105,7 +106,7 @@ class DeviceController {
                 message: getReasonPhrase(StatusCodes.BAD_REQUEST),
             });
         }
-
+    
         try {
             const result = await DeviceService.deleteDevice(device_id);
             if (result.affectedRows === 0) {
@@ -126,6 +127,7 @@ class DeviceController {
             });
         }
     }
+    
 }
 
 module.exports = DeviceController;
