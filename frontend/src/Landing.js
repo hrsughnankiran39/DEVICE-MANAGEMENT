@@ -14,6 +14,7 @@ import {
   faBuilding,
   faEnvelope,
   faPhoneAlt,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import AddDevice from "./AddDevice";
 import DeleteDevice from "./DeleteDevice";
@@ -22,6 +23,7 @@ Chart.register(PieController, ArcElement, Tooltip, Legend);
 
 const Landing = () => {
   const [devices, setDevices] = useState([]);
+  const [filteredDevices, setFilteredDevices] = useState([]);
   const [deviceMessage, setDeviceMessage] = useState("Fetching devices...");
   const [chartData, setChartData] = useState(null);
   const [chartInstance, setChartInstance] = useState(null);
@@ -29,10 +31,11 @@ const Landing = () => {
   const [showDeleteDevice, setShowDeleteDevice] = useState(false);
   const [status, setStatus] = useState("Checking...");
   const [tooltip, setTooltip] = useState("");
-  const [notificationMessage, setNotificationMessage] = useState("");
-  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
-  const [deviceCount, setDeviceCount] = useState(0); // Added state for device count
-  const [isNotificationFetched, setIsNotificationFetched] = useState(false); // To track if notification data is fetched
+  const [deviceCount, setDeviceCount] = useState(0);
+  const [isNotificationFetched, setIsNotificationFetched] = useState(false);
+  const [showSearchForm, setShowSearchForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
 
@@ -43,20 +46,30 @@ const Landing = () => {
   };
 
   useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/getalldevices");
-        if (response.data && response.data.devices.length > 0) {
-          setDevices(response.data.devices);
-        } else {
-          setDeviceMessage("No devices found.");
-        }
-      } catch (error) {
-        setDeviceMessage("Error fetching devices.");
-      }
-    };
     fetchDevices();
   }, []);
+
+  const fetchDevices = async (creator = "") => {
+    try {
+      let url = "http://localhost:5000/api/getalldevices";
+      if (creator.trim() !== "") {
+        url += `?creator=${creator}`; // Append creator filter only if searchQuery is not empty
+      }
+  
+      const response = await axios.get(url);
+      if (response.data && response.data.devices.length > 0) {
+        setDevices(response.data.devices);
+        setFilteredDevices(response.data.devices);
+      } else {
+        setFilteredDevices([]);
+        setDeviceMessage("No devices found.");
+      }
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+      setFilteredDevices([]);
+      setDeviceMessage("Error fetching devices.");
+    }
+  };
 
   const fetchDeviceCounts = async () => {
     try {
@@ -82,7 +95,7 @@ const Landing = () => {
     try {
       const response = await axios.get("http://localhost:5000/api/getnotification");
       if (response.data.statusCode === 200) {
-        setDeviceCount(response.data.deviceCount); // Update device count
+        setDeviceCount(response.data.deviceCount);
       }
     } catch (error) {
       console.error("Error fetching notification:", error);
@@ -141,8 +154,8 @@ const Landing = () => {
 
   useEffect(() => {
     if (!isNotificationFetched) {
-      fetchNotification(); // Fetch notification data on component load
-      setIsNotificationFetched(true); // Set flag to true to prevent multiple calls
+      fetchNotification();
+      setIsNotificationFetched(true);
     }
   }, [isNotificationFetched]);
 
@@ -156,110 +169,143 @@ const Landing = () => {
     setShowAddDevice(false);
   };
 
+  const handleSearchToggle = () => {
+    setShowSearchForm((prev) => !prev);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault(); // Prevent form from reloading the page
+  
+    if (!searchQuery.trim()) {
+      fetchDevices(); // If the input is empty, fetch all devices
+    } else {
+      fetchDevices(searchQuery); // Fetch only the devices by the entered creator name
+    }
+  };
   return (
     <div style={styles.container}>
-      <h1 style={styles.heading}>DEVICES INFO</h1>
-      <div style={styles.header}>
-        <p style={styles.greeting}>
-          Hello, <span style={styles.username}>{username}</span>!
-        </p>
-        <p
-          style={status === "Active" ? styles.activeStatus : styles.deactiveStatus}
-          title={tooltip}
-        >
-          {status}
-        </p>
-        <div>
-  <div style={styles.notificationContainer}>
-    <FontAwesomeIcon
-      icon={faBell}
-      style={styles.notificationIcon}
-      title="Notifications"
-      onClick={fetchNotification}
-    />
-    {deviceCount > 0 && <span style={styles.badge}>{deviceCount}</span>} {/* Badge for count */}
+  <h1 style={styles.heading}>DEVICES INFO</h1>
+  <div style={styles.header}>
+    <p style={styles.greeting}>
+      Hello, <span style={styles.username}>{username}</span>!
+    </p>
+    <p
+      style={status === "Active" ? styles.activeStatus : styles.deactiveStatus}
+      title={tooltip}
+    >
+      {status}
+    </p>
+    <div>
+      <div style={styles.notificationContainer}>
+        <FontAwesomeIcon
+          icon={faBell}
+          style={styles.notificationIcon}
+          title="Notifications"
+          onClick={fetchNotification}
+        />
+        {deviceCount > 0 && <span style={styles.badge}>{deviceCount}</span>} {/* Badge for count */}
+      </div>
+    </div>
+    <button style={styles.logoutButton} onClick={handleLogout}>
+      <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+    </button>
   </div>
-  {/* Other content and components */}
-</div>
-        <button style={styles.logoutButton} onClick={handleLogout}>
-          <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+
+  <div style={styles.columns}>
+  <div style={styles.column}>
+        <h2 style={styles.columnHeader}>
+          <FontAwesomeIcon icon={faList} /> Devices
+          <FontAwesomeIcon
+            icon={faSearch}
+            style={styles.searchIcon}
+            onClick={handleSearchToggle}
+          />
+        </h2>
+        {showSearchForm && (
+          <form onSubmit={handleSearchSubmit} style={styles.searchForm}>
+            <input
+              type="text"
+              placeholder="Enter Creator Name"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={styles.searchInput}
+            />
+            <button type="submit" style={styles.searchButton}>
+              Search
+            </button>
+          </form>
+        )}
+        <div style={styles.deviceListContainer}>
+          {filteredDevices.length > 0 ? (
+            <table style={styles.table}>
+              <thead>
+                <tr style={styles.tableHeaderRow}>
+                  <th style={styles.tableHeader}>Device ID</th>
+                  <th style={styles.tableHeader}>Created By</th>
+                  <th style={styles.tableHeader}>Created Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDevices.map((device, index) => (
+                  <tr key={index} style={styles.tableRow}>
+                    <td style={styles.tableCell}>{device.device_id}</td>
+                    <td style={styles.tableCell}>{device.created_by}</td>
+                    <td style={styles.tableCell}>
+                      {new Date(device.created_time).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>{deviceMessage}</p>
+          )}
+        </div>
+      </div>
+
+    <div style={styles.column}>
+      <h2 style={styles.columnHeader}>
+        <FontAwesomeIcon icon={faPlus} /> Actions
+      </h2>
+      <div style={styles.actionButtonsContainer}>
+        <button style={styles.actionButton} onClick={toggleAddDevice}>
+          <FontAwesomeIcon icon={faPlus} /> Add Device
+        </button>
+        <button style={styles.actionButton} onClick={toggleDeleteDevice}>
+          <FontAwesomeIcon icon={faTrash} /> Delete Device
         </button>
       </div>
-      <div style={styles.columns}>
-      <div style={styles.column}>
-  <h2 style={styles.columnHeader}>
-    <FontAwesomeIcon icon={faList} /> Devices
-  </h2>
-  <div style={styles.deviceListContainer}>
-    {devices.length > 0 ? (
-      <table style={styles.table}>
-        <thead>
-          <tr style={styles.tableHeaderRow}>
-            <th style={styles.tableHeader}>Device ID</th>
-            <th style={styles.tableHeader}>Created By</th>
-            <th style={styles.tableHeader}>Created Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {devices.map((device, index) => (
-            <tr key={index} style={styles.tableRow}>
-              <td style={styles.tableCell}>{device.device_id}</td>
-              <td style={styles.tableCell}>{device.created_by}</td>
-              <td style={styles.tableCell}>
-                {new Date(device.created_time).toLocaleString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ) : (
-      <p>{deviceMessage}</p>
-    )}
+      {showAddDevice && <AddDevice />}
+      {showDeleteDevice && <DeleteDevice />}
+    </div>
+
+    <div style={styles.column}>
+      <h2 style={styles.columnHeader}>
+        <FontAwesomeIcon icon={faChartPie} /> Device Count
+      </h2>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          height: "300px",
+          margin: "0 auto",
+        }}
+      >
+        <canvas id="deviceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div style={styles.contactDetails}>
+    <p style={styles.contactInfo}>
+      <FontAwesomeIcon icon={faUser} style={styles.icon} /> Sughnan H R,{" "}
+      <FontAwesomeIcon icon={faBuilding} style={styles.icon} /> Alten GT,{" "}
+      <FontAwesomeIcon icon={faEnvelope} style={styles.icon} /> hrsughnankiran389@gmail.com,{" "}
+      <FontAwesomeIcon icon={faPhoneAlt} style={styles.icon} /> 9480146265
+    </p>
   </div>
 </div>
 
-        <div style={styles.columns}>
-          <div style={styles.column}>
-            <h2 style={styles.columnHeader}>
-              <FontAwesomeIcon icon={faPlus} /> Actions
-            </h2>
-            <div style={styles.actionButtonsContainer}>
-              <button style={styles.actionButton} onClick={toggleAddDevice}>
-                <FontAwesomeIcon icon={faPlus} /> Add Device
-              </button>
-              <button style={styles.actionButton} onClick={toggleDeleteDevice}>
-                <FontAwesomeIcon icon={faTrash} /> Delete Device
-              </button>
-            </div>
-            {showAddDevice && <AddDevice />}
-            {showDeleteDevice && <DeleteDevice />}
-          </div>
-        </div>
-        <div style={styles.column}>
-          <h2 style={styles.columnHeader}>
-            <FontAwesomeIcon icon={faChartPie} /> Device Count
-          </h2>
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "400px",
-              height: "300px",
-              margin: "0 auto",
-            }}
-          >
-            <canvas id="deviceChart"></canvas>
-          </div>
-        </div>
-      </div>
-      <div style={styles.contactDetails}>
-        <p style={styles.contactInfo}>
-          <FontAwesomeIcon icon={faUser} style={styles.icon} /> Sughnan H R,{" "}
-          <FontAwesomeIcon icon={faBuilding} style={styles.icon} /> Alten GT,{" "}
-          <FontAwesomeIcon icon={faEnvelope} style={styles.icon} /> hrsughnankiran389@gmail.com,{" "}
-          <FontAwesomeIcon icon={faPhoneAlt} style={styles.icon} /> 9480146265
-        </p>
-      </div>
-    </div>
   );
 };
 
@@ -416,13 +462,13 @@ const styles = {
     color: "#f6e58d", // Explicitly set yellow text for all child elements
   },
   actionButton: {
-    width: "200px", // Width for the button
+    width: "180px", // Width for the button
     height: "40px", // Height for the button
-    fontSize: "1.2rem", // Font size for button text
+    fontSize: "1.1rem", // Font size for button text
     color: "#f6e58d",
     backgroundColor: "#ff7f50", // Coral button
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "12px",
     cursor: "pointer",
     fontWeight: "bold",
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",

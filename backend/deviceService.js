@@ -15,29 +15,13 @@ class DeviceService {
         });
     }
     static async getAllDevices(filters = {}) {
-        const { creator, startDate, endDate } = filters; // Destructure filters
+        const { creator } = filters; // Destructure filters to get creator
         let query = 'SELECT * FROM devices WHERE soft_delete = 0';
         const queryParams = [];
     
-        if (creator || startDate || endDate) {
-            const conditions = [];
-    
-            if (creator) {
-                conditions.push('created_by = ?');
-                queryParams.push(creator);
-            }
-    
-            if (startDate) {
-                conditions.push('DATE(created_time) >= ?');
-                queryParams.push(startDate);
-            }
-    
-            if (endDate) {
-                conditions.push('DATE(created_time) <= ?');
-                queryParams.push(endDate);
-            }
-    
-            query += ` WHERE ${conditions.join(' AND ')}`;
+        if (creator) {
+            query += ' AND created_by = ?'; // Filter based on creator
+            queryParams.push(creator);
         }
     
         query += ' ORDER BY created_time DESC';
@@ -49,6 +33,7 @@ class DeviceService {
             });
         });
     }
+    
     
 
     static async getDeviceCount() {
