@@ -54,7 +54,7 @@ const DeleteDevice = () => {
         <div className="confirm-modal-overlay">
           <div className="confirm-modal">
             <div className="confirm-box">
-              <p>Are you sure you want to delete the device with ID: {deviceId}?</p>
+              <p style={{ color: "black" }}>Are you sure you want to delete the device with ID: {deviceId}?</p>
               <button onClick={handleDeleteDevice} disabled={loading}>Yes, Delete</button>
               <button onClick={() => setShowConfirm(false)}>Cancel</button>
             </div>

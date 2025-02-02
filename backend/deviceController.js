@@ -20,7 +20,9 @@ class DeviceController {
 
     static async getAllDevices(req, res) {
         try {
-            const devices = await DeviceService.getAllDevices();
+            const creator = req.query.creator || null; // Get creator from query params
+            const devices = await DeviceService.getAllDevices(creator);
+    
             res.status(StatusCodes.OK).json({
                 statusCode: StatusCodes.OK,
                 devices,
@@ -33,6 +35,7 @@ class DeviceController {
             });
         }
     }
+    
 
     static async getDeviceCount(req, res) {
         try {

@@ -51,25 +51,26 @@ const Landing = () => {
 
   const fetchDevices = async (creator = "") => {
     try {
-      let url = "http://localhost:5000/api/getalldevices";
-      if (creator.trim() !== "") {
-        url += `?creator=${creator}`; // Append creator filter only if searchQuery is not empty
-      }
-  
-      const response = await axios.get(url);
-      if (response.data && response.data.devices.length > 0) {
-        setDevices(response.data.devices);
-        setFilteredDevices(response.data.devices);
-      } else {
-        setFilteredDevices([]);
-        setDeviceMessage("No devices found.");
-      }
+        let url = "http://localhost:5000/api/getalldevices";
+        if (creator.trim() !== "") {
+            url += `?creator=${encodeURIComponent(creator)}`;
+        }
+
+        const response = await axios.get(url);
+        if (response.data && response.data.devices.length > 0) {
+            setDevices(response.data.devices);
+            setFilteredDevices(response.data.devices);
+        } else {
+            setFilteredDevices([]);
+            setDeviceMessage("No devices found.");
+        }
     } catch (error) {
-      console.error("Error fetching devices:", error);
-      setFilteredDevices([]);
-      setDeviceMessage("Error fetching devices.");
+        console.error("Error fetching devices:", error);
+        setFilteredDevices([]);
+        setDeviceMessage("Error fetching devices.");
     }
-  };
+};
+
 
   const fetchDeviceCounts = async () => {
     try {
@@ -215,52 +216,64 @@ const Landing = () => {
   <div style={styles.column}>
         <h2 style={styles.columnHeader}>
           <FontAwesomeIcon icon={faList} /> Devices
+          <span style={{ marginLeft: "15px" }}>
           <FontAwesomeIcon
             icon={faSearch}
             style={styles.searchIcon}
             onClick={handleSearchToggle}
           />
+            </span>
         </h2>
         {showSearchForm && (
           <form onSubmit={handleSearchSubmit} style={styles.searchForm}>
-            <input
+          <input
               type="text"
               placeholder="Enter Creator Name"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={styles.searchInput}
-            />
-            <button type="submit" style={styles.searchButton}>
-              Search
-            </button>
-          </form>
+          />
+          <button type="submit" style={styles.searchButton}>Search</button>
+          <button 
+              type="button" 
+              style={styles.clearButton} 
+              onClick={() => {
+                  setSearchQuery("");
+                  fetchDevices(); // Fetch all devices when cleared
+              }}
+          >
+              Clear
+          </button>
+      </form>
+      
         )}
         <div style={styles.deviceListContainer}>
-          {filteredDevices.length > 0 ? (
-            <table style={styles.table}>
-              <thead>
+    {filteredDevices.length > 0 ? (
+        <table style={styles.table}>
+            <thead>
                 <tr style={styles.tableHeaderRow}>
-                  <th style={styles.tableHeader}>Device ID</th>
-                  <th style={styles.tableHeader}>Created By</th>
-                  <th style={styles.tableHeader}>Created Time</th>
+                    <th style={styles.tableHeader}>Device ID</th>
+                    <th style={styles.tableHeader}>Created By</th>
+                    <th style={styles.tableHeader}>Created Time</th>
                 </tr>
-              </thead>
-              <tbody>
+            </thead>
+            <tbody>
                 {filteredDevices.map((device, index) => (
-                  <tr key={index} style={styles.tableRow}>
-                    <td style={styles.tableCell}>{device.device_id}</td>
-                    <td style={styles.tableCell}>{device.created_by}</td>
-                    <td style={styles.tableCell}>
-                      {new Date(device.created_time).toLocaleString()}
-                    </td>
-                  </tr>
+                    <tr key={index} style={styles.tableRow}>
+                        <td style={styles.tableCell}>{device.device_id}</td>
+                        <td style={styles.tableCell}>{device.created_by}</td>
+                        <td style={styles.tableCell}>
+                            {new Date(device.created_time).toLocaleString()}
+                        </td>
+                    </tr>
                 ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>{deviceMessage}</p>
-          )}
-        </div>
+            </tbody>
+        </table>
+    ) : (
+        <p>{deviceMessage}</p>
+    )}
+</div>
+
       </div>
 
     <div style={styles.column}>

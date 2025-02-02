@@ -14,17 +14,16 @@ class DeviceService {
             });
         });
     }
-    static async getAllDevices(filters = {}) {
-        const { creator } = filters; // Destructure filters to get creator
-        let query = 'SELECT * FROM devices WHERE soft_delete = 0';
-        const queryParams = [];
+    static async getAllDevices(creator = null) {
+        let query = `SELECT * FROM devices WHERE soft_delete = 0`;
+        let queryParams = [];
     
         if (creator) {
-            query += ' AND created_by = ?'; // Filter based on creator
+            query += ` AND created_by = ?`;
             queryParams.push(creator);
         }
     
-        query += ' ORDER BY created_time DESC';
+        query += ` ORDER BY created_time DESC`;
     
         return new Promise((resolve, reject) => {
             db.query(query, queryParams, (err, results) => {
@@ -33,8 +32,6 @@ class DeviceService {
             });
         });
     }
-    
-    
 
     static async getDeviceCount() {
         const query = 'SELECT * FROM devices WHERE soft_delete = 0';
